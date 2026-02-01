@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pastel Do China - Cardápio</title>
+    <style>
+        :root {
+            --primary: #e63946;
+            --secondary: #ffb703;
+            --dark: #1d3557;
+            --light: #f1faee;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light);
+            margin: 0;
+            padding: 0;
+            color: var(--dark);
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin: 0; font-size: 2.5rem; text-transform: uppercase; letter-spacing: 2px; }
+        p.subtitle { margin-top: 0.5rem; opacity: 0.9; }
+
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+
+        /* Filtros */
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--secondary);
+            color: var(--dark);
+        }
+
+        /* Grid de Itens */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .menu-item {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .menu-item:hover { transform: translateY(-5px); }
+
+        .item-info { padding: 1.5rem; }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .item-title { font-size: 1.2rem; font-weight: bold; }
+        .item-price { color: var(--primary); font-weight: 800; font-size: 1.1rem; }
+        .item-desc { font-size: 0.9rem; color: #666; line-height: 1.4; }
+
+        .add-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            border: none;
+            background: var(--dark);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .add-btn:hover { background: var(--primary); }
+
+        /* Carrinho Flutuante */
+        .cart-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--secondary);
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Pastel Do China</h1>
+    <p class="subtitle">O melhor pastel da região desde 1998 🥟</p>
+</header>
+
+<div class="container">
+    <div class="filters">
+        <button class="filter-btn active" onclick="filterMenu('todos')">Todos</button>
+        <button class="filter-btn" onclick="filterMenu('pastéis')">Pastéis</button>
+        <button class="filter-btn" onclick="filterMenu('porções')">Porções</button>
+        <button class="filter-btn" onclick="filterMenu('bebidas')">Bebidas</button>
+    </div>
+
+    <div class="menu-grid" id="menu-container">
+        </div>
+</div>
+
+<div class="cart-status" id="cart-status">
+    🛒 Carrinho: <span id="cart-count">0</span> itens | Total: R$ <span id="cart-total">0.00</span>
+</div>
+
+<script>
+    const menuItems = [
+        { id: 1, category: 'pastéis', title: 'Carne com Queijo', price: 12.00, desc: 'Carne moída temperada com muçarela derretida.' },
+        { id: 2, category: 'pastéis', title: 'Frango com Catupiry', price: 13.50, desc: 'Frango desfiado com o autêntico Catupiry.' },
+        { id: 3, category: 'pastéis', title: 'Pastel de Vento', price: 8.00, desc: 'O clássico de feira, crocante e sequinho.' },
+        { id: 4, category: 'pastéis', title: 'Especial do China', price: 18.00, desc: 'Carne, ovo, bacon, queijo, milho e azeitona.' },
+        { id: 5, category: 'porções', title: 'Batata Frita G', price: 25.00, desc: '700g de batata crocante com cheddar e bacon.' },
+        { id: 6, category: 'porções', title: 'Mini Pastéis (12 un)', price: 30.00, desc: 'Sabores variados para dividir com a galera.' },
+        { id: 7, category: 'bebidas', title: 'Caldo de Cana 500ml', price: 10.00, desc: 'Geladinho, moído na hora com limão ou abacaxi.' },
+        { id: 8, category: 'bebidas', title: 'Coca-Cola Lata', price: 6.00, desc: 'Original ou Zero.' },
+        { id: 9, category: 'bebidas', title: 'Suco Natural', price: 9.00, desc: 'Laranja, Limão ou Morango.' }
+    ];
+
+    let cart = [];
+
+    function displayMenu(items) {
+        const container = document.getElementById('menu-container');
+        container.innerHTML = items.map(item => `
+            <div class="menu-item" data-category="${item.category}">
+                <div class="item-info">
+                    <div class="item-header">
+                        <span class="item-title">${item.title}</span>
+                        <span class="item-price">R$ ${item.price.toFixed(2)}</span>
+                    </div>
+                    <p class="item-desc">${item.desc}</p>
+                    <button class="add-btn" onclick="addToCart(${item.id})">Adicionar ao Pedido</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function filterMenu(category) {
+        const buttons = document.querySelectorAll('.filter-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if (category === 'todos') {
+            displayMenu(menuItems);
+        } else {
+            const filtered = menuItems.filter(item => item.category === category);
+            displayMenu(filtered);
+        }
+    }
+
+    function addToCart(id) {
+        const item = menuItems.find(i => i.id === id);
+        cart.push(item);
+        updateCartUI();
+    }
+
+    function updateCartUI() {
+        const cartStatus = document.getElementById('cart-status');
+        const cartCount = document.getElementById('cart-count');
+        const cartTotal = document.getElementById('cart-total');
+        
+        if (cart.length > 0) {
+            cartStatus.style.display = 'block';
+            cartCount.innerText = cart.length;
+            const total = cart.reduce((acc, item) => acc + item.price, 0);
+            cartTotal.innerText = total.toFixed(2);
+        }
+    }
+
+    // Inicializar cardápio
+    displayMenu(menuItems);
+</script>
+
+</body>
+</html>
